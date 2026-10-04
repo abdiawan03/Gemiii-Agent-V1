@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
+<meta name="theme-color" content="#111827">
+<title>Gemiii Agent</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0}
+  body{font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#0b0f19;color:#f9fafb}
+  .scrollbar::-webkit-scrollbar{width:7px}.scrollbar::-webkit-scrollbar-thumb{background:#374151;border-radius:20px}
+  .glass{background:rgba(17,24,39,.88);backdrop-filter:blur(14px)}
+  .panel{background:#111827;border:1px solid #263244}
+  .active{background:#1f2937}
+  .msg{max-width:min(820px,88%);white-space:pre-wrap;line-height:1.6}
+  textarea{resize:none}
+  .hidden-panel{display:none}
+  @media(max-width:700px){.sidebar{position:fixed;z-index:30;left:-290px;transition:left .2s}.sidebar.open{left:0}.overlay{display:none}.overlay.show{display:block}.msg{max-width:92%}}
+</style>
+</head>
+<body>
+<div class="h-full flex overflow-hidden">
+
+  <div id="overlay" class="overlay fixed inset-0 bg-black/60 z-20 md:hidden"></div>
+
+  <aside id="sidebar" class="sidebar w-[280px] shrink-0 border-r border-gray-800 bg-[#0f141f] flex flex-col">
+    <div class="p-4 border-b border-gray-800 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <button id="closeSide" class="md:hidden text-gray-400">✕</button>
+        <div class="w-9 h-9 rounded-xl bg-blue-600 flex items-center justify-center font-bold">G</div>
+        <div><div class="font-bold">Gemiii Agent</div><div class="text-[11px] text-gray-500">AI content assistant</div></div>
+      </div>
+    </div>
+
+    <div class="p-3">
+      <button id="newChat" class="w-full rounded-xl border border-gray-700 hover:bg-gray-800 py-2.5 text-sm">＋ New chat</button>
+    </div>
+
+    <nav class="px-3 space-y-1">
+      <button data-panel="chat" class="nav w-full text-left px-3 py-2.5 rounded-lg active">💬 Chat</button>
+      <button data-panel="story" class="nav w-full text-left px-3 py-2.5 rounded-lg">📖 Story Creator</button>
+      <button data-panel="memory" class="nav w-full text-left px-3 py-2.5 rounded-lg">🧠 Memory & Instructions</button>
+      <button data-panel="settings" class="nav w-full text-left px-3 py-2.5 rounded-lg">⚙️ Gemini Settings</button>
+    </nav>
+
+    <div class="mt-auto p-4 border-t border-gray-800 text-xs text-gray-500">
+      <div class="mb-2">Connection</div>
+      <div id="status" class="text-yellow-400">Not connected</div>
+    </div>
+  </aside>
+
+  <main class="flex-1 min-w-0 flex flex-col">
+    <header class="h-16 shrink-0 border-b border-gray-800 glass flex items-center px-4 gap-3">
+      <button id="openSide" class="text-gray-300 text-xl">☰</button>
+      <div class="font-semibold" id="pageTitle">Gemiii Agent</div>
+      <div class="ml-auto text-xs text-gray-500 hidden sm:block">Personal AI Content Agent</div>
+    </header>
+
+    <section id="chatPanel" class="panel-view flex-1 flex flex-col min-h-0">
+      <div id="chat" class="flex-1 overflow-y-auto scrollbar p-4 md:p-8 space-y-5">
+        <div class="max-w-3xl mx-auto">
+          <div class="panel rounded-2xl p-5">
+            <div class="text-xl font-semibold mb-2">Welcome to Gemiii Agent 👋</div>
+            <p class="text-gray-400 text-sm leading-6">Connect Gemini in Settings, then chat naturally. You can also use Story Creator to turn one story and a duration into a production plan with scenes, image prompts, video prompts and dialogue.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="border-t border-gray-800 p-3 md:p-5">
+        <div class="max-w-4xl mx-auto">
+          <div id="attachment" class="hidden mb-2 text-xs text-blue-300"></div>
+          <div class="panel rounded-2xl p-2 flex items-end gap-2">
+            <label class="w-10 h-10 rounded-xl hover:bg-gray-800 flex items-center justify-center cursor-pointer">
+              📎<input id="file" type="file" class="hidden">
+            </label>
+            <textarea id="input" rows="1" placeholder="Message Gemiii..." class="flex-1 bg-transparent outline-none px-2 py-2 text-sm max-h-36"></textarea>
+            <button id="send" class="w-10 h-10 rounded-xl bg-blue-600 hover:bg-blue-500">➤</button>
+          </div>
+          <div class="text-[10px] text-gray-600 text-center mt-2">Gemiii Agent • Check generated content before publishing.</div>
+        </div>
+      </div>
+    </section>
+
+    <section id="storyPanel" class="panel-view hidden-panel flex-1 overflow-y-auto scrollbar p-4 md:p-8">
+      <div class="max-w-4xl mx-auto">
+        <h2 class="text-2xl font-bold mb-2">Story Creator</h2>
+        <p class="text-gray-400 text-sm mb-6">Give Gemiii one story, duration and instructions. It will prepare a structured production plan.</p>
+        <div class="grid md:grid-cols-2 gap-4">
+          <div>
+            <label class="text-xs text-gray-400">Story</label>
+            <textarea id="story" class="mt-2 w-full min-h-64 panel rounded-xl p-3 outline-none" placeholder="Paste or write your story..."></textarea>
+          </div>
+          <div class="space-y-4">
+            <div>
+              <label class="text-xs text-gray-400">Total duration</label>
+              <input id="duration" class="mt-2 w-full panel rounded-xl p-3 outline-none" placeholder="15 minutes">
+            </div>
+            <div>
+              <label class="text-xs text-gray-400">Instructions / style</label>
+              <textarea id="storyInstructions" class="mt-2 w-full min-h-32 panel rounded-xl p-3 outline-none" placeholder="Roman Urdu dialogues, emotional family drama, suspense..."></textarea>
+            </div>
+            <button id="createPlan" class="w-full bg-blue-600 hover:bg-blue-500 rounded-xl py-3 font-semibold">Create Production Plan</button>
+          </div>
+        </div>
+        <div id="planOutput" class="mt-6"></div>
+      </div>
+    </section>
+
+    <section id="memoryPanel" class="panel-view hidden-panel flex-1 overflow-y-auto scrollbar p-4 md:p-8">
+      <div class="max-w-3xl mx-auto">
+        <h2 class="text-2xl font-bold">Memory & Instructions</h2>
+        <p class="text-gray-400 text-sm mt-2">These instructions stay in this browser and are automatically included in Gemini requests.</p>
+        <textarea id="memory" class="w-full min-h-80 panel rounded-xl p-4 mt-5 outline-none" placeholder="Example:
+Always write my drama dialogues in Roman Urdu.
+Keep character names consistent.
+For a 15-minute story, divide scenes by realistic timing.
+Create detailed image and video prompts..."></textarea>
+        <button id="saveMemory" class="mt-3 bg-blue-600 hover:bg-blue-500 px-5 py-3 rounded-xl">Save Instructions</button>
+        <span id="memorySaved" class="text-xs text-green-400 ml-3"></span>
+      </div>
+    </section>
+
+    <section id="settingsPanel" class="panel-view hidden-panel flex-1 overflow-y-auto scrollbar p-4 md:p-8">
+      <div class="max-w-3xl mx-auto">
+        <h2 class="text-2xl font-bold">Gemini Settings</h2>
+        <p class="text-gray-400 text-sm mt-2">For this first version, the API key is stored locally in this browser. Do not publish a real key in source code.</p>
+        <div class="panel rounded-2xl p-5 mt-6">
+          <label class="text-xs text-gray-400">Gemini API Key</label>
+          <input id="apiKey" type="password" autocomplete="off" class="w-full mt-2 bg-gray-900 border border-gray-700 rounded-xl p-3 outline-none" placeholder="Paste your Gemini API key">
+          <div class="flex gap-2 mt-3">
+            <button id="saveKey" class="bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded-lg">Save & Test</button>
+            <button id="clearKey" class="border border-gray-700 px-4 py-2 rounded-lg">Clear</button>
+          </div>
+          <div id="keyMessage" class="text-xs mt-3 text-gray-400"></div>
+        </div>
+        <div class="panel rounded-2xl p-5 mt-4">
+          <div class="font-semibold">Model</div>
+          <select id="model" class="w-full mt-2 bg-gray-900 border border-gray-700 rounded-xl p-3">
+            <option value="gemini-2.5-flash">gemini-2.5-flash</option>
+            <option value="gemini-2.5-flash-lite">gemini-2.5-flash-lite</option>
+          </select>
+          <p class="text-xs text-gray-500 mt-2">If a selected model is unavailable for your API project, choose another model available to your account.</p>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const KEY = "gemiii_api_key";
+const MODEL = "gemiii_model";
+const MEMORY = "gemiii_memory";
+let selectedFile = null;
+let selectedMime = null;
+
+const defaultInstructions = `You are Gemiii, an advanced, friendly and intelligent AI personal assistant powered by Gemini.
+Act naturally, understand context, and be helpful and concise.
+Help with content creation, story planning, scripts, timing, characters, image prompts and video prompts.
+When the user asks for an image, create a detailed image-generation prompt and explain what should be generated.
+When the user asks for a video, first create a creative script and detailed visual/video prompt.
+For story production, preserve character continuity and organize work into scenes with timing.
+Professional yet friendly tone.`;
+
+function loadLocal(){
+  $("apiKey").value = localStorage.getItem(KEY) || "";
+  $("model").value = localStorage.getItem(MODEL) || "gemini-2.5-flash";
+  $("memory").value = localStorage.getItem(MEMORY) || "";
+  setStatus(localStorage.getItem(KEY) ? "Key saved locally" : "Not connected");
+}
+function setStatus(t, good=false){$("status").textContent=t;$("status").className=good?"text-green-400":"text-yellow-400"}
+function esc(s){return String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]))}
+function addMessage(role,text){
+  const wrap=document.createElement("div");
+  wrap.className="max-w-4xl mx-auto flex "+(role==="user"?"justify-end":"justify-start");
+  wrap.innerHTML=`<div class="msg rounded-2xl px-4 py-3 ${role==="user"?"bg-blue-600":"panel"} text-sm">${esc(text)}</div>`;
+  $("chat").appendChild(wrap); $("chat").scrollTop=$("chat").scrollHeight;
+}
+function showPanel(name){
+  document.querySelectorAll(".panel-view").forEach(x=>x.classList.add("hidden-panel"));
+  $(name+"Panel").classList.remove("hidden-panel");
+  document.querySelectorAll(".nav").forEach(x=>x.classList.remove("active"));
+  const n=document.querySelector(`[data-panel="${name}"]`); if(n)n.classList.add("active");
+  $("pageTitle").textContent=name==="chat"?"Gemiii Agent":name==="story"?"Story Creator":name==="memory"?"Memory & Instructions":"Gemini Settings";
+  closeSidebar();
+}
+function openSidebar(){$("sidebar").classList.add("open");$("overlay").classList.add("show")}
+function closeSidebar(){$("sidebar").classList.remove("open");$("overlay").classList.remove("show")}
+$("openSide").onclick=openSidebar;$("closeSide").onclick=closeSidebar;$("overlay").onclick=closeSidebar;
+document.querySelectorAll(".nav").forEach(b=>b.onclick=()=>showPanel(b.dataset.panel));
+
+$("newChat").onclick=()=>{$("chat").innerHTML="";addMessage("assistant","New chat started. How can I help?");showPanel("chat")};
+
+$("file").onchange=e=>{
+  const f=e.target.files[0]; if(!f)return;
+  if(f.size>8*1024*1024){alert("Please use a file smaller than 8 MB.");return}
+  selectedFile=f; selectedMime=f.type;
+  $("attachment").textContent="Attached: "+f.name; $("attachment").classList.remove("hidden");
+};
+
+async function filePart(){
+  if(!selectedFile)return null;
+  return new Promise((resolve,reject)=>{
+    const r=new FileReader();
+    r.onload=()=>resolve({inlineData:{mimeType:selectedMime,data:r.result.split(",")[1]}});
+    r.onerror=reject;r.readAsDataURL(selectedFile);
+  });
+}
+
+function systemText(){
+  const mem=localStorage.getItem(MEMORY)||"";
+  return defaultInstructions+(mem?"\n\nUSER'S SAVED INSTRUCTIONS:\n"+mem:"");
+}
+
+async function gemini(parts){
+  const key=localStorage.getItem(KEY);
+  if(!key)throw new Error("Connect Gemini first in Settings.");
+  const model=localStorage.getItem(MODEL)||"gemini-2.5-flash";
+  const url=`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(key)}`;
+  const body={system_instruction:{parts:[{text:systemText()}]},contents:[{role:"user",parts}]};
+  const r=await fetch(url,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
+  const data=await r.json();
+  if(!r.ok) throw new Error(data?.error?.message||"Gemini request failed.");
+  return data?.candidates?.[0]?.content?.parts?.map(p=>p.text||"").join("") || "No text response.";
+}
+
+async function send(){
+  const text=$("input").value.trim();
+  if(!text&&!selectedFile)return;
+  if(!localStorage.getItem(KEY)){showPanel("settings");$("keyMessage").textContent="Add your Gemini API key first.";return}
+  $("input").value="";
+  addMessage("user",text||(selectedFile?"[Attached file]":""));
+  const parts=[]; const fp=await filePart(); if(fp)parts.push(fp); parts.push({text:text||"Analyze the attached file."});
+  selectedFile=null;selectedMime=null;$("file").value="";$("attachment").classList.add("hidden");
+  try{addMessage("assistant","Gemiii is thinking...");const nodes=$("chat").querySelectorAll(".msg");const last=nodes[nodes.length-1];const answer=await gemini(parts);last.textContent=answer;setStatus("Connected",true)}
+  catch(e){const nodes=$("chat").querySelectorAll(".msg");const last=nodes[nodes.length-1];last.textContent="Error: "+e.message;setStatus("Connection error")}
+}
+$("send").onclick=send;
+$("input").addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();send()}});
+
+$("saveMemory").onclick=()=>{localStorage.setItem(MEMORY,$("memory").value);$("memorySaved").textContent="Saved";setTimeout(()=>$("memorySaved").textContent="",1500)};
+$("saveKey").onclick=async()=>{
+  const k=$("apiKey").value.trim();
+  if(!k){$("keyMessage").textContent="Please enter an API key.";return}
+  localStorage.setItem(KEY,k);localStorage.setItem(MODEL,$("model").value);
+  $("keyMessage").textContent="Testing Gemini connection...";
+  try{const x=await gemini([{text:"Reply with exactly: GEMINI_CONNECTED"}]);$("keyMessage").textContent=x.includes("GEMINI_CONNECTED")?"Connected successfully.":"Gemini responded successfully.";setStatus("Connected",true)}
+  catch(e){$("keyMessage").textContent="Error: "+e.message;setStatus("Connection error")}
+};
+$("clearKey").onclick=()=>{localStorage.removeItem(KEY);$("apiKey").value="";$("keyMessage").textContent="Key removed from this browser.";setStatus("Not connected")};
+
+$("createPlan").onclick=async()=>{
+  const story=$("story").value.trim(),duration=$("duration").value.trim(),ins=$("storyInstructions").value.trim();
+  if(!story){$("planOutput").innerHTML='<div class="panel rounded-xl p-4 text-red-300">Please enter the story.</div>';return}
+  if(!localStorage.getItem(KEY)){showPanel("settings");$("keyMessage").textContent="Connect Gemini first.";return}
+  $("planOutput").innerHTML='<div class="panel rounded-xl p-4 text-gray-400">Creating production plan...</div>';
+  const prompt=`Create a production-ready AI drama/content plan from the following.
+TOTAL DURATION: ${duration||"Not specified"}
+STORY:
+${story}
+ADDITIONAL INSTRUCTIONS:
+${ins||"Use the user's saved instructions."}
+
+Return:
+1. Title
+2. Character list with concise continuity notes
+3. Scene-by-scene table/list with scene number, timing, location, action, dialogue purpose
+4. For EVERY scene: detailed IMAGE PROMPT
+5. For EVERY scene: detailed VIDEO PROMPT including camera, movement, lighting, mood and continuity
+6. Dialogue/script where appropriate
+7. Final production checklist
+Do not invent that you actually generated media. These are prompts/plans unless a connected generation service is explicitly available.`;
+  try{
+    const ans=await gemini([{text:prompt}]);
+    $("planOutput").innerHTML=`<div class="panel rounded-2xl p-5 whitespace-pre-wrap text-sm leading-7">${esc(ans)}</div>`;
+  }catch(e){$("planOutput").innerHTML=`<div class="panel rounded-xl p-4 text-red-300">Error: ${esc(e.message)}</div>`}
+};
+
+loadLocal();
+</script>
+</body>
+</html>
